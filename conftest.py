@@ -1,0 +1,83 @@
+import random
+import string
+
+import pytest
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
+BASE_URL = "https://qa-stellarburgers.education-services.ru/"
+CREATE_USER_API = "api/auth/register"
+USER_DATA_API = "api/auth/user"
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--browser",
+        action="store",
+        default="chrome",
+        help="Browser for tests: chrome or firefox"
+    )
+
+
+@pytest.fixture
+def driver(request):
+    browser = request.config.getoption("--browser").lower()
+
+    if browser == "firefox":
+        options = FirefoxOptions()
+        driver = webdriver.Firefox(options=options)
+    elif browser == "chrome":
+        options = ChromeOptions()
+        driver = webdriver.Chrome(options=options)
+    else:
+        raise ValueError("Browser must be chrome or firefox")
+
+    driver.maximize_window()
+    yield driver
+    driver.quit()
+
+
+@pytest.fixture
+def create_user():
+    created_tokens = []
+
+    def generate_user_data():
+        suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        return {
+            "email": f"autotest_{suffix}@ya.ru",
+            "password": f"Password_{suffix}",
+            "name": f"User_{suffix}"
+        }
+
+    def _create_user():
+        user_data = generate_user_data()
+        response = requests.post(
+            f"{BASE_URL}{CREATE_USER_API}",
+            json=user_data
+        )
+
+        if response.status_code != 200:
+            raise AssertionError(
+                f"User was not created. Status code: {response.status_code}, body: {response.text}"
+            )
+
+        response_json = response.json()
+        access_token = response_json.get("accessToken")
+
+        if not access_token:
+            raise AssertionError(
+                f"No accessToken in response: {response.text}"
+            )
+
+        created_tokens.append(access_token)
+        return user_data, response
+
+    yield _create_user
+
+    for token in created_tokens:
+        requests.delete(
+            f"{BASE_URL}{USER_DATA_API}",
+            headers={"Authorization": token}
+        )
