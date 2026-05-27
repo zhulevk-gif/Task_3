@@ -1,11 +1,12 @@
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.wait import WebDriverWait
-
 from pages.base_page import BasePage
 from locators.login_page_locators import LoginPageLocators
+from urls import LOGIN_URL
 
 
 class LoginPage(BasePage):
+    def open(self):
+        self.open_url(LOGIN_URL)
+
     def open_forgot_password_page(self):
         self.click_element(LoginPageLocators.forgot_password_link)
 
@@ -23,6 +24,9 @@ class LoginPage(BasePage):
             return self.get_text_from_element(LoginPageLocators.error_text)
         return ""
 
+    def is_login_page_opened(self):
+        return self.current_url_contains("/login")
+
     def login(self, email, password):
         self.fill_email(email)
         self.fill_password(password)
@@ -35,16 +39,15 @@ class LoginPage(BasePage):
 
         self.click_login_button()
 
-        try:
-            WebDriverWait(self.driver, 10).until(
-                lambda driver: "/login" not in driver.current_url
-            )
-        except TimeoutException:
+        if not self.wait_for_url_not_contains("/login", timeout=10):
             error_text = self.get_login_error_text()
+            current_url = self.get_current_url()
+
             if error_text:
                 raise AssertionError(
-                    f"Login failed with UI error: {error_text}. Current URL: {self.driver.current_url}"
+                    f"Login failed with UI error: {error_text}. Current URL: {current_url}"
                 )
+
             raise AssertionError(
-                f"Login was not completed. Current URL: {self.driver.current_url}"
+                f"Login was not completed. Current URL: {current_url}"
             )

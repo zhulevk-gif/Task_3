@@ -54,5 +54,5 @@ class MainPageLocators:
 
     order_number = (
         By.XPATH,
-        "//h2[contains(@class, 'Modal_modal__title') or contains(@class, 'text_type_digits-large')]"
+        "//section[contains(@class, 'Modal_modal_opened')]//*[contains(@class, 'text_type_digits-large')]"
     )

@@ -1,9 +1,8 @@
 import allure
 
-from pages.main_page import MainPage
 from pages.login_page import LoginPage
+from pages.main_page import MainPage
 from pages.profile_page import ProfilePage
-from urls import BASE_URL
 
 
 @allure.feature("Личный кабинет")
@@ -13,14 +12,13 @@ class TestProfile:
     @allure.story("Переход из шапки сайта")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_open_personal_account(self, driver, create_user):
-        user_data, _ = create_user()
-
-        driver.get(BASE_URL)
+        user_data = create_user()
 
         main_page = MainPage(driver)
         login_page = LoginPage(driver)
         profile_page = ProfilePage(driver)
 
+        main_page.open()
         main_page.open_profile()
         login_page.login(user_data["email"], user_data["password"])
         main_page.open_profile()
@@ -31,14 +29,13 @@ class TestProfile:
     @allure.story("Переход внутри профиля")
     @allure.severity(allure.severity_level.NORMAL)
     def test_open_order_history(self, driver, create_user):
-        user_data, _ = create_user()
-
-        driver.get(BASE_URL)
+        user_data = create_user()
 
         main_page = MainPage(driver)
         login_page = LoginPage(driver)
         profile_page = ProfilePage(driver)
 
+        main_page.open()
         main_page.open_profile()
         login_page.login(user_data["email"], user_data["password"])
         main_page.open_profile()
@@ -50,17 +47,16 @@ class TestProfile:
     @allure.story("Авторизация")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_logout_from_account(self, driver, create_user):
-        user_data, _ = create_user()
-
-        driver.get(BASE_URL)
+        user_data = create_user()
 
         main_page = MainPage(driver)
         login_page = LoginPage(driver)
         profile_page = ProfilePage(driver)
 
+        main_page.open()
         main_page.open_profile()
         login_page.login(user_data["email"], user_data["password"])
         main_page.open_profile()
         profile_page.click_logout_button()
 
-        assert "login" in driver.current_url
+        assert login_page.is_login_page_opened()

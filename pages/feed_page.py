@@ -20,10 +20,13 @@ class FeedPage(BasePage):
     def get_in_work_text(self):
         return self.get_text_from_element(FeedPageLocators.in_work_block)
 
+    def is_order_present(self, order_number):
+        return order_number in self.driver.page_source
+
     def wait_for_total_counter_change(self, old_value):
         try:
             self.wait.until(
-                lambda driver: int(self.get_total_done_counter()) >= old_value
+                lambda driver: int(self.get_total_done_counter()) > int(old_value)
             )
         except TimeoutException:
             pass
@@ -31,7 +34,7 @@ class FeedPage(BasePage):
     def wait_for_today_counter_change(self, old_value):
         try:
             self.wait.until(
-                lambda driver: int(self.get_today_done_counter()) >= old_value
+                lambda driver: int(self.get_today_done_counter()) > int(old_value)
             )
         except TimeoutException:
             pass
@@ -43,3 +46,6 @@ class FeedPage(BasePage):
             )
         except TimeoutException:
             pass
+
+    def is_order_in_work(self, order_number):
+        return order_number in self.get_in_work_text()

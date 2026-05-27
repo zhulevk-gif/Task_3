@@ -7,9 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-BASE_URL = "https://qa-stellarburgers.education-services.ru/"
-CREATE_USER_API = "api/auth/register"
-USER_DATA_API = "api/auth/user"
+from urls import DELETE_USER_URL, REGISTER_USER_URL
 
 
 def pytest_addoption(parser):
@@ -27,16 +25,16 @@ def driver(request):
 
     if browser == "firefox":
         options = FirefoxOptions()
-        driver = webdriver.Firefox(options=options)
+        web_driver = webdriver.Firefox(options=options)
     elif browser == "chrome":
         options = ChromeOptions()
-        driver = webdriver.Chrome(options=options)
+        web_driver = webdriver.Chrome(options=options)
     else:
         raise ValueError("Browser must be chrome or firefox")
 
-    driver.maximize_window()
-    yield driver
-    driver.quit()
+    web_driver.maximize_window()
+    yield web_driver
+    web_driver.quit()
 
 
 @pytest.fixture
@@ -53,10 +51,7 @@ def create_user():
 
     def _create_user():
         user_data = generate_user_data()
-        response = requests.post(
-            f"{BASE_URL}{CREATE_USER_API}",
-            json=user_data
-        )
+        response = requests.post(REGISTER_USER_URL, json=user_data)
 
         if response.status_code != 200:
             raise AssertionError(
@@ -72,12 +67,12 @@ def create_user():
             )
 
         created_tokens.append(access_token)
-        return user_data, response
+        return user_data
 
     yield _create_user
 
     for token in created_tokens:
         requests.delete(
-            f"{BASE_URL}{USER_DATA_API}",
+            DELETE_USER_URL,
             headers={"Authorization": token}
         )
